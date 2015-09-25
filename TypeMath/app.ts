@@ -209,7 +209,9 @@ class Application
 
 		this.enrichKeywords();
 
-		document.onkeydown = (e) => { this.processInput(e) };
+		// document.onkeydown = (e) => { this.processInput(e) };
+		this.latex.focus();
+		this.latex.on('keydown', (e) => { this.processInput(e.originalEvent) });
 		proof.change(e =>
 		{
 			this.proofMode = proof.prop("checked");
@@ -313,7 +315,8 @@ class Application
 		if (latex.length > 0)
 			latex += "\n";
 		latex += LaTeX.trans(this.formula, "", this.proofMode);
-		this.latex.text(latex);
+		// this.latex.text(latex);
+		this.latex.val(latex);
 		if (this.autosave)
 			localStorage.setItem("latex", latex);
 
@@ -1029,7 +1032,7 @@ class Application
 
 		var dif = forward ? 1 : -1;
 
-		if (this.activeField instanceof Formula)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+		if (this.activeField instanceof Formula)
 		{
 			if (this.activeIndex + dif >= 0
 				&& this.activeIndex + dif <= this.activeField.count())
@@ -1502,7 +1505,7 @@ class Application
 			this.pushCommand();
 		else
 			this.pushSymbols(support);
-		
+
 		this.currentInput = "";
 		this.inputType = InputType.Empty;
 		this.inputEscaped = false;
@@ -2492,6 +2495,7 @@ class Application
 	private drawAfterLayout(): void
 	{
 		var box = this.field[0].getBoundingClientRect();
+		// var box = this.ghost[0].getBoundingClientRect();
 		this.ghost.prop({
 			"width": box.width,
 			"height": box.height
