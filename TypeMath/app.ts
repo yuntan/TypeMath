@@ -223,6 +223,16 @@ class Application
 				localStorage.setItem("latex", "");
 		});
 		proof.change();
+		$('#btnCopy').on('mouseup', (e) => {
+			if (!document.queryCommandSupported('copy')) return;
+			let latex = document.querySelector((<any>this.latex).selector);
+			let range = document.createRange();
+			range.selectNode(latex);
+			window.getSelection().addRange(range);
+			let ok = document.execCommand('copy');
+			console.debug(ok ? 'copied' : 'copy failed');
+			window.getSelection().removeAllRanges();	// remove selection
+		});
 		ghost.mousedown((e) => { this.dragFrom = { x: e.pageX, y: e.pageY }; this.jumpTo(this.dragFrom); });
 		ghost.mousemove((e) => { this.dragSelect(e); });
 		ghost.mouseup((e) => { this.dragFrom = this.dragRect = null; this.render(); });

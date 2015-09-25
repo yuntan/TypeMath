@@ -8,6 +8,11 @@
 	margin: 1em;
 }
 
+#btnCopy
+{
+	float: right;
+}
+
 #fieldFrame
 {
 	position: relative;
