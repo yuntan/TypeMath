@@ -1,0 +1,7 @@
+{
+    "compilerOptions": {
+        "outDir": "../build/",
+        "sourceMap": true,
+        "target": "es5"
+    }
+}
