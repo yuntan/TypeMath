@@ -1,7 +1,7 @@
-﻿/// <reference path="formula.ts" />
-/// <reference path="util.ts" />
+﻿import {Matrix, Formula, TokenSeq, StructType, Token} from './formula';
+import * as util from './util';
 
-enum StrokeStyle
+export enum StrokeStyle
 {
 	None,
 	Plain,
@@ -9,14 +9,14 @@ enum StrokeStyle
 	Dashed,
 	Wavy
 }
-enum LabelPosotion
+export enum LabelPosotion
 {
 	Left,
 	Middle,
 	Right
 }
 
-interface Arrow
+export interface Arrow
 {
 	from: { row: number; col: number };
 	to: { row: number; col: number };
@@ -27,7 +27,7 @@ interface Arrow
 	labelPos: LabelPosotion;
 }
 
-interface Decoration
+export interface Decoration
 {
 	size: number;
 	circle: boolean;
@@ -35,7 +35,7 @@ interface Decoration
 	style: StrokeStyle;
 }
 
-class Diagram extends Matrix
+export class Diagram extends Matrix
 {
 	arrows: Arrow[][][];
 	decorations: Decoration[][];
@@ -53,7 +53,7 @@ class Diagram extends Matrix
 
 		for (var i = 0; i < rows; i++)
 		{
-			this.arrows.push(Util.num(cols).map(() => []));
+			this.arrows.push(util.num(cols).map(() => []));
 			this.decorations.push([]);
 		}
 	}
@@ -157,7 +157,7 @@ class Diagram extends Matrix
 	}
 	private allArrows(): Arrow[]
 	{
-		return Util.concat(Util.concat(this.arrows));
+		return util.concat(util.concat(this.arrows));
 	}
 
 	public remove(from: number, to: number, extensive?: boolean): Token[]
@@ -427,7 +427,7 @@ class Diagram extends Matrix
 		}
 		else
 		{
-			this.arrows.push(Util.num(this.cols).map(() => []));
+			this.arrows.push(util.num(this.cols).map(() => []));
 			this.decorations.push([]);
 		}
 

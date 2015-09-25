@@ -1,4 +1,4 @@
-﻿/// <reference path="formula.ts" />
+﻿import {Token, Symbol, Num, Macro, Structure, Matrix, Formula, FontStyle, StructType, BigOpr, Accent} from './formula';
 
 class MathEx
 {
@@ -272,31 +272,29 @@ class Polynomial extends Token
 	}
 }
 
-class Calc
+export default function eval(t: Token[]): Token[]
 {
-	public static eval(t: Token[]): Token[]
-	{
-		console.debug("eval start : " + t.toString());
+	console.debug("eval start : " + t.toString());
 
-		var r = Calc.evalSeq(t);
+	var r = evalSeq(t);
 
-		console.debug("eval result : " + (r ? r.toString() : "no value"));
+	console.debug("eval result : " + (r ? r.toString() : "no value"));
 
-		if (r)
-			return Calc.interpret(r);
-		else
-			return null;
-	}
+	if (r)
+		return interpret(r);
+	else
+		return null;
+}
 
-	private static interpret(t: Token): Token[]
+	function interpret(t: Token): Token[]
 	{
 		if (t instanceof Polynomial)
 		{
-			return Calc.fromPolynomial(<Polynomial> t);
+			return fromPolynomial(<Polynomial> t);
 		}
 		else if (t instanceof Numeric)
 		{
-			return [Calc.fromNumeric(<Numeric> t)];
+			return [fromNumeric(<Numeric> t)];
 		}
 		else if (t instanceof Matrix)
 		{
@@ -306,19 +304,19 @@ class Calc
 			for (var i = 0; i < m.elems.length; i++)
 			{
 				m.elems[i].tokens = m.elems[i].tokens.reduce(
-					(prev: Token[], curr) => prev.concat(Calc.interpret(curr)), []);
+					(prev: Token[], curr) => prev.concat(interpret(curr)), []);
 			}
 			f.tokens.push(m);
-			
+
 			return [f];
 		}
 
 		return null;
 	}
-	private static fromPolynomial(p: Polynomial): Token[]
+	function fromPolynomial(p: Polynomial): Token[]
 	{
 		var t: Token[] = [];
-		
+
 		for (var i = 0; i < p.term.length; i++)
 		{
 			var a = p.term[i];
@@ -327,7 +325,7 @@ class Calc
 				t.push(new Symbol("+", false));
 
 			if (a.coeff.approx || a.coeff.value != 1 || Object.keys(a.exponent).length == 0)
-				t.push(Calc.fromNumeric(a.coeff));
+				t.push(fromNumeric(a.coeff));
 
 			for (var x in a.exponent)
 			{
@@ -342,11 +340,11 @@ class Calc
 		}
 
 		if (t.length == 0)
-			t.push(Calc.fromNumeric(Numeric.Zero));
+			t.push(fromNumeric(Numeric.Zero));
 
 		return t;
 	}
-	private static fromNumeric(n: Numeric): Token
+	function fromNumeric(n: Numeric): Token
 	{
 		if (!n.approx)
 		{
@@ -366,7 +364,7 @@ class Calc
 		}
 	}
 
-    private static operator: Operator[] = [
+    let operator: Operator[] = [
 		{ symbol: "mod", type: OperatorType.Infix, priority: 0 },
 		{ symbol: "+", type: OperatorType.Infix, priority: 1 },
 		{ symbol: "-", type: OperatorType.Infix, priority: 1 },
@@ -405,30 +403,30 @@ class Calc
 		{ symbol: "]", type: OperatorType.Suffix, priority: Number.POSITIVE_INFINITY },
 		{ symbol: "}", type: OperatorType.Suffix, priority: Number.POSITIVE_INFINITY }
 	];
-	private static checkType(symbol: string, type: OperatorType): boolean
+	function checkType(symbol: string, type: OperatorType): boolean
 	{
-		return Calc.operator.some(o => o.symbol == symbol && o.type == type);
+		return operator.some(o => o.symbol == symbol && o.type == type);
 	}
-	private static getOperator(symbol: string, type: OperatorType): Operator
+	function getOperator(symbol: string, type: OperatorType): Operator
 	{
-		for (var i = 0; i < Calc.operator.length; i++)
+		for (var i = 0; i < operator.length; i++)
 		{
-			var o = Calc.operator[i];
+			var o = operator[i];
 			if (o.symbol == symbol && o.type == type)
 				return o;
 		}
 
 		return null;
 	}
-	private static getPriority(symbol: string, type: OperatorType): number
+	function getPriority(symbol: string, type: OperatorType): number
 	{
-		var o = Calc.getOperator(symbol, type);
+		var o = getOperator(symbol, type);
 		return o !== null ? o.priority : -1;
 	}
 
-	private static evalSeq(t: Token[]): Token
+	function evalSeq(t: Token[]): Token
 	{
-		var opr: string[] = Calc.operator.map(o => o.symbol);
+		var opr: string[] = operator.map(o => o.symbol);
 		var q: Token[] = [];
 
 		for (var i = 0; i < t.length; i++)
@@ -459,7 +457,7 @@ class Calc
 				for (var j = 0; j < m.elems.length; j++)
 				{
 					var f = new Formula(x);
-					f.tokens[0] = Calc.evalSeq(m.elems[j].tokens);
+					f.tokens[0] = evalSeq(m.elems[j].tokens);
 					if (f.tokens[0] == null)
 					{
 						x = null;
@@ -476,9 +474,9 @@ class Calc
 				switch (s.type)
 				{
 					case StructType.Frac:
-						var num = Calc.evalSeq(s.elems[0].tokens);
-						var den = Calc.evalSeq(s.elems[1].tokens);
-						r = Calc.mul(num, den, true);
+						var num = evalSeq(s.elems[0].tokens);
+						var den = evalSeq(s.elems[1].tokens);
+						r = mul(num, den, true);
 						break;
 				}
 			}
@@ -486,25 +484,25 @@ class Calc
 			{
 				var f = <Formula> t[i];
 
-				r = Calc.evalSeq(f.tokens);
+				r = evalSeq(f.tokens);
 
 				if (f.prefix == "√" && f.suffix == "")
-					r = Calc.realFunc(r, Math.sqrt);
+					r = realFunc(r, Math.sqrt);
 				else if (f.prefix == "|" && f.suffix == "|"
 					|| f.prefix == "‖" && f.suffix == "‖")
-					r = Calc.norm(r);
+					r = norm(r);
 				else if (f.prefix == "⌊" && f.suffix == "⌋")
-					r = Calc.floor(r);
+					r = floor(r);
 				else if (f.prefix == "⌈" && f.suffix == "⌉")
-					r = Calc.ceil(r);
+					r = ceil(r);
 			}
 
 			q[i] = (r !== null ? r : t[i]);
 		}
 
-		return Calc.evalSeqMain(q, 0, 0);
+		return evalSeqMain(q, 0, 0);
 	}
-	private static evalSeqMain(t: Token[], index: number, border: number): Token
+	function evalSeqMain(t: Token[], index: number, border: number): Token
 	{
 		var res: Token = null;
 		var argc = 0;
@@ -519,27 +517,27 @@ class Calc
 		if (t[index] instanceof Symbol)
 		{
 			console.debug("eval 0 symbol");
-			var opr = Calc.getOperator((<Symbol> t[index]).str, OperatorType.Prefix);
+			var opr = getOperator((<Symbol> t[index]).str, OperatorType.Prefix);
 
 			if (opr != null && opr.priority >= border)
 			{
 				if (opr.symbol == "(" || opr.symbol == "[" || opr.symbol == "{")
 				{
 					argc = 3;
-					Calc.evalSeqMain(t, index + 1, 0);
+					evalSeqMain(t, index + 1, 0);
 					console.debug("eval br " + t.toString());
 					res = t[index + 1];
 				}
 				else
 				{
 					argc = 2;
-					Calc.evalSeqMain(t, index + 1, opr.priority + 1);
+					evalSeqMain(t, index + 1, opr.priority + 1);
 					if (opr.symbol == "-")
-						res = Calc.negate(t[index + 1]);
+						res = negate(t[index + 1]);
 					else if (opr.symbol == "+")
 						res = t[index + 1];
 					else if (opr.func)
-						res = Calc.realFunc(t[index + 1], opr.func);
+						res = realFunc(t[index + 1], opr.func);
 				}
 			}
 		}
@@ -549,33 +547,33 @@ class Calc
 			var o = <Symbol> t[index + 1];
 			var p: number;
 
-			if ((p = Calc.getPriority(o.str, OperatorType.Infix)) >= border)
+			if ((p = getPriority(o.str, OperatorType.Infix)) >= border)
 			{
 				argc = 3;
-				Calc.evalSeqMain(t, index + 2, p + 1);
+				evalSeqMain(t, index + 2, p + 1);
 				if (o.str == "+")
-					res = Calc.add(t[index], t[index + 2], false);
+					res = add(t[index], t[index + 2], false);
 				else if (o.str == "-")
-					res = Calc.add(t[index], t[index + 2], true);
+					res = add(t[index], t[index + 2], true);
 				else if (o.str == "*" || o.str == "·" || o.str == "∙")
-					res = Calc.mul(t[index], t[index + 2], false);
+					res = mul(t[index], t[index + 2], false);
 				else if (o.str == "/" || o.str == "÷")
-					res = Calc.mul(t[index], t[index + 2], true);
+					res = mul(t[index], t[index + 2], true);
 				else if (o.str == "mod")
-					res = Calc.mod(t[index], t[index + 2]);
+					res = mod(t[index], t[index + 2]);
 			}
-			else if ((p = Calc.getPriority(o.str, OperatorType.Suffix)) >= border)
+			else if ((p = getPriority(o.str, OperatorType.Suffix)) >= border)
 			{
 				argc = 2;
-				Calc.evalSeqMain(t, index + 2, p + 1);
+				evalSeqMain(t, index + 2, p + 1);
 				if (o.str == "!")
-					res = Calc.factorial(t[index]);
+					res = factorial(t[index]);
 			}
-			else if ((p = Calc.getPriority(o.str, OperatorType.Prefix)) >= border)
+			else if ((p = getPriority(o.str, OperatorType.Prefix)) >= border)
 			{
 				argc = 2;
-				Calc.evalSeqMain(t, index + 1, 0);
-				res = Calc.mul(t[index], t[index + 1], false);
+				evalSeqMain(t, index + 1, 0);
+				res = mul(t[index], t[index + 1], false);
 			}
 		}
 		else if (t[index + 1] instanceof Structure
@@ -584,24 +582,24 @@ class Calc
 			console.debug("eval 1 pow");
 			var res: Token = null;
 			var s = <Structure> t[index + 1];
-			var p = Calc.getPriority("^", OperatorType.Infix);
+			var p = getPriority("^", OperatorType.Infix);
 
 			if (p >= border)
 			{
 				argc = 2;
-				res = Calc.power(t[index], Calc.evalSeq(s.elems[0].tokens.slice(0)));
+				res = power(t[index], evalSeq(s.elems[0].tokens.slice(0)));
 			}
 		}
 		else if (t.length - index >= 2)
 		{
 			console.debug("eval 0 mul");
-			var p = Calc.getPriority("*", OperatorType.Infix);
+			var p = getPriority("*", OperatorType.Infix);
 			if (p >= border)
 			{
 				argc = 2;
-				Calc.evalSeqMain(t, index + 1, p + 1);
-				res = Calc.mul(t[index], t[index + 1], false);
-			}			
+				evalSeqMain(t, index + 1, p + 1);
+				res = mul(t[index], t[index + 1], false);
+			}
 		}
 
 		if (res !== null)
@@ -610,7 +608,7 @@ class Calc
 			console.debug("eval res " + t.toString() + " " + index + " " + border);
 
 			if (t.length - index > 1)
-				Calc.evalSeqMain(t, index, 0);
+				evalSeqMain(t, index, 0);
 		}
 		else
 		{
@@ -619,7 +617,7 @@ class Calc
 		return t.length == 1 ? t[0] : null;
 	}
 
-	private static add(x: Token, y: Token, sub: boolean): Token
+	function add(x: Token, y: Token, sub: boolean): Token
 	{
 		if (x instanceof Formula && (<Formula> x).tokens.length == 1)
 			x = (<Formula> x).tokens[0];
@@ -656,7 +654,7 @@ class Calc
 				var r = new Matrix(null, a.rows, a.cols);
 				for (var i = 0; i < a.count(); i++)
 				{
-					var s = Calc.add(a.elems[i], b.elems[i], sub);
+					var s = add(a.elems[i], b.elems[i], sub);
 					if (s === null)
 						return null;
 
@@ -669,7 +667,7 @@ class Calc
 
 		return null;
 	}
-	private static mul(x: Token, y: Token, div: boolean): Token
+	function mul(x: Token, y: Token, div: boolean): Token
 	{
 		if (x instanceof Formula && (<Formula> x).tokens.length == 1)
 			x = (<Formula> x).tokens[0];
@@ -693,7 +691,7 @@ class Calc
 				for (var j = 0; j < b.cols; j++)
 				{
 					r.elems[i * b.cols + j] = new Formula(r);
-					var s = Calc.mul(x, b.tokenAt(i, j), false);
+					var s = mul(x, b.tokenAt(i, j), false);
 					if (s === null)
 						return null;
 					r.elems[i * b.cols + j].tokens.push(s);
@@ -726,10 +724,10 @@ class Calc
 					for (var j = 0; j < b.cols; j++)
 					{
 						r.elems[i * a.cols + j] = new Formula(r);
-						var s = Calc.mul(a.tokenAt(i, 0), b.tokenAt(0, j), false);
+						var s = mul(a.tokenAt(i, 0), b.tokenAt(0, j), false);
 						for (var k = 1; k < a.cols; k++)
 						{
-							s = Calc.add(s, Calc.mul(a.tokenAt(i, k), b.tokenAt(k, j), false), false);
+							s = add(s, mul(a.tokenAt(i, k), b.tokenAt(k, j), false), false);
 							if (s == null)
 								return null;
 						}
@@ -742,7 +740,7 @@ class Calc
 
 		return null;
 	}
-	private static mod(x: Token, y: Token): Token
+	function mod(x: Token, y: Token): Token
 	{
 		if (x instanceof Formula && (<Formula> x).tokens.length == 1)
 			x = (<Formula> x).tokens[0];
@@ -765,7 +763,7 @@ class Calc
 
 		return null;
 	}
-	private static negate(x: Token): Token
+	function negate(x: Token): Token
 	{
 		if (x instanceof Numeric)
 		{
@@ -784,7 +782,7 @@ class Calc
 				for (var j = 0; j < a.cols; j++)
 				{
 					r.elems[i * a.cols + j] = new Formula(r);
-					var s = Calc.add(Numeric.Zero, a.tokenAt(i, j), true);
+					var s = add(Numeric.Zero, a.tokenAt(i, j), true);
 					if (s === null)
 						return null;
 					r.elems[i * a.cols + j].tokens.push(s);
@@ -795,7 +793,7 @@ class Calc
 
 		return null;
 	}
-	private static power(x: Token, y: Token): Token
+	function power(x: Token, y: Token): Token
 	{
 		if (x instanceof Numeric && y instanceof Numeric)
 		{
@@ -836,14 +834,14 @@ class Calc
 				var ex = Math.abs(b.num);
 				var r: Token = m;
 				for (var i = 1; i < ex; i++)
-					r = Calc.mul(r, m, false);
+					r = mul(r, m, false);
 				return r;
 			}
 		}
 
 		return null;
 	}
-	private static realFunc(x: Token, f: (x: number) => number): Token
+	function realFunc(x: Token, f: (x: number) => number): Token
 	{
 		if (x instanceof Numeric)
 		{
@@ -853,7 +851,7 @@ class Calc
 
 		return null;
 	}
-	private static factorial(x: Token): Token
+	function factorial(x: Token): Token
 	{
 		if (x instanceof Numeric)
 		{
@@ -870,7 +868,7 @@ class Calc
 
 		return null;
 	}
-	private static norm(x: Token): Token
+	function norm(x: Token): Token
 	{
 		if (x instanceof Numeric)
 		{
@@ -880,7 +878,7 @@ class Calc
 
 		return null;
 	}
-	private static floor(x: Token): Token
+	function floor(x: Token): Token
 	{
 		if (x instanceof Numeric)
 		{
@@ -890,7 +888,7 @@ class Calc
 
 		return null;
 	}
-	private static ceil(x: Token): Token
+	function ceil(x: Token): Token
 	{
 		if (x instanceof Numeric)
 		{
@@ -900,7 +898,7 @@ class Calc
 
 		return null;
 	}
-	private static inverseMatrix(m: Matrix): Matrix
+	function inverseMatrix(m: Matrix): Matrix
 	{
 		if (m.rows != m.cols)
 			return null;
@@ -908,4 +906,3 @@ class Calc
 		var r = new Matrix(null, m.rows, m.rows);
 
 	}
-}

@@ -1,6 +1,6 @@
-﻿/// <reference path="jquery.d.ts" />
+﻿/// <reference path="typings/jquery.d.ts" />
 
-class Token
+export class Token
 {
 	renderedElem: JQuery = null;
 
@@ -15,7 +15,7 @@ class Token
 	}
 }
 
-class Symbol extends Token
+export class Symbol extends Token
 {
 	str: string;
 	variable: boolean;	// italic
@@ -38,7 +38,7 @@ class Symbol extends Token
 	}
 }
 
-class Num extends Token
+export class Num extends Token
 {
 	value: string;
 
@@ -59,7 +59,7 @@ class Num extends Token
 	}
 }
 
-interface TokenSeq
+export interface TokenSeq
 {
 	parent: TokenSeq;
 	count(): number;
@@ -76,7 +76,7 @@ interface TokenSeq
 	renderedElem: JQuery;
 }
 
-enum StructType
+export enum StructType
 {
 	Infer,
 	Frac,
@@ -89,7 +89,7 @@ enum StructType
 	Macro,
 }
 
-class Structure extends Token /* TokenSeq */
+export class Structure extends Token /* TokenSeq */
 {
 	parent: TokenSeq;
 	type: StructType;
@@ -215,7 +215,7 @@ class Structure extends Token /* TokenSeq */
 	}
 }
 
-class Matrix extends Structure
+export class Matrix extends Structure
 {
 	rows: number;
 	cols: number;
@@ -381,7 +381,7 @@ class Matrix extends Structure
 		return "Matrix" + this.rows + "," + this.cols + "[" + this.elems.map(f => f.toString()).join(", ") + "]";
 	}
 }
-class BigOpr extends Structure
+export class BigOpr extends Structure
 {
 	operator: string;
 
@@ -401,11 +401,11 @@ class BigOpr extends Structure
 		return s;
 	}
 }
-class Accent extends Structure
+export class Accent extends Structure
 {
 	symbol: string;
 	above: boolean;
-	
+
 	constructor(parent: TokenSeq, symbol: string, above: boolean)
 	{
 		super(parent, StructType.Accent);
@@ -427,7 +427,7 @@ class Accent extends Structure
 		return "Accent" + this.symbol + "[" + this.elems.map(f => f.toString()).join(", ") + "]";
 	}
 }
-class Macro extends Structure
+export class Macro extends Structure
 {
 	name: string;
 
@@ -458,7 +458,7 @@ class Macro extends Structure
 	}
 }
 
-enum FontStyle
+export enum FontStyle
 {
 	Normal,
 	Bold,
@@ -469,7 +469,7 @@ enum FontStyle
 	Typewriter
 }
 
-class Formula extends Token /* TokenSeq */
+export class Formula extends Token /* TokenSeq */
 {
 	parent: TokenSeq;
 	tokens: Token[] = [];

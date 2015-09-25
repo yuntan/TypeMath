@@ -1,0 +1,18 @@
+{
+  "name": "typemath",
+  "version": "1.0.0",
+  "description": "",
+  "main": "typemath.js",
+  "scripts": {
+    "compile": "tsc --project .",
+    "bundle": "browserify -o build/typemath.bundle.js build/typemath.js",
+    "minify": "uglifyjs build/typemath.bundle.js -o build/typemath.min.js --source-map build/typemath.js.map --source-map-url /js/typemath.js.map -p 1",
+    "build": "rm -rf build; npm run compile && npm run bundle && npm run minify"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "browserify": "^11.2.0",
+    "uglify-js": "^2.4.24"
+  }
+}

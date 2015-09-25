@@ -1,19 +1,18 @@
-﻿/// <reference path="formula.ts" />
-/// <reference path="util.ts" />
+﻿import * as util from './util';
 
-enum LaTeXASTType
+export enum LaTeXASTType
 {
 	Sequence, Environment, Command, Symbol, Number
 }
 
-interface LaTeXAST
+export interface LaTeXAST
 {
 	type: LaTeXASTType;
 	value: string;
 	children: LaTeXAST[];
 }
 
-class LaTeXReader
+export class LaTeXReader
 {
 	rest: string;
 	parsed: string;
@@ -299,7 +298,7 @@ class LaTeXReader
 				return [true];
 			default:
 				if (cmd in this.macroArgNum)
-					return Util.repeat(true, this.macroArgNum[cmd]);
+					return util.repeat(true, this.macroArgNum[cmd]);
 				else
 					return [];
 		}

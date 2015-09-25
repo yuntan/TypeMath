@@ -1,4 +1,4 @@
-﻿interface Point
+﻿export interface Point
 {
     x: number;
     y: number;
@@ -24,6 +24,7 @@ class Segment
 		console.error("[Segment.draw] draw method not implemented");
 	}
 }
+
 class Line extends Segment
 {
 	constructor(p0x: number, p0y: number, p1x: number, p1y: number, w0: number, w1?: number)
@@ -51,6 +52,7 @@ class Line extends Segment
 		ctx.closePath();
 	}
 }
+
 class Bezier extends Segment
 {
     c1: Point;
@@ -79,7 +81,7 @@ class Bezier extends Segment
 		var d0 = { x: w0 * Math.cos(t0), y: w0 * Math.sin(t0) };
 		var d1 = { x: w1 * Math.cos(t1), y: w1 * Math.sin(t1) };
 		var dc = { x: w * Math.cos(tc), y: w * Math.sin(tc) };
-		
+
 		ctx.moveTo(this.p0.x + d0.x, this.p0.y + d0.y);
 		ctx.bezierCurveTo(this.c1.x + dc.x, this.c1.y + dc.y, this.c2.x + dc.x, this.c2.y + dc.y,
 			this.p1.x + d1.x, this.p1.y + d1.y);
@@ -154,10 +156,10 @@ class Glyph
 	}
 }
 
-class GlyphFactory
+export class GlyphFactory
 {
     private canvas: HTMLCanvasElement;
-    
+
     private data: { [key: string]: Glyph } = {};
     private cache: { [key: string]: string } = {};
 
@@ -213,7 +215,7 @@ class GlyphFactory
 		this.data["←"] = this.data["→"].reflect();
 		this.data["︷"] = this.data["{"].turnRight();
 		this.data["︸"] = this.data["}"].turnRight();
-}
+    }
 
     public generate(char: string): string
     {
