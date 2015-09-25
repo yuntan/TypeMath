@@ -225,13 +225,15 @@ class Application
 		proof.change();
 		$('#btnCopy').on('mouseup', (e) => {
 			if (!document.queryCommandSupported('copy')) return;
-			let latex = document.querySelector((<any>this.latex).selector);
-			let range = document.createRange();
-			range.selectNode(latex);
-			window.getSelection().addRange(range);
+			// let latex = document.querySelector((<any>this.latex).selector);
+			// let range = document.createRange();
+			// range.selectNode(latex);
+			// window.getSelection().addRange(range);
+			this.latex.select();
 			let ok = document.execCommand('copy');
 			console.debug(ok ? 'copied' : 'copy failed');
-			window.getSelection().removeAllRanges();	// remove selection
+			// window.getSelection().removeAllRanges();	// remove selection
+			this.latex[0].selectionStart = this.latex[0].selectionEnd = -1;
 		});
 		ghost.mousedown((e) => { this.dragFrom = { x: e.pageX, y: e.pageY }; this.jumpTo(this.dragFrom); });
 		ghost.mousemove((e) => { this.dragSelect(e); });
