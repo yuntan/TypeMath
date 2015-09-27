@@ -25,7 +25,7 @@ class Segment
 	}
 }
 
-class Line extends Segment
+export class Line extends Segment
 {
 	constructor(p0x: number, p0y: number, p1x: number, p1y: number, w0: number, w1?: number)
 	{
@@ -53,7 +53,7 @@ class Line extends Segment
 	}
 }
 
-class Bezier extends Segment
+export class Bezier extends Segment
 {
     c1: Point;
 	c2: Point;
@@ -98,7 +98,7 @@ class Bezier extends Segment
     }
 }
 
-class Glyph
+export class Glyph
 {
     seg: Segment[];
     width: number;

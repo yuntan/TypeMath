@@ -1,4 +1,8 @@
-﻿var data = {};
+﻿/// <reference path="../TypeMath/typings/jquery.d.ts" />
+
+import {Glyph, Bezier, Line, Point} from '../TypeMath/glyph';
+
+let data: { [key: string]: Glyph } = {};
 
 data["("] = new Glyph(24, 64,
 	new Bezier(20, 4, 20, 60, 4, 2, 4, 62, 0, 0, 3));
@@ -22,7 +26,7 @@ data["overbrace"] = data["{"].turnRight();
 
 var glyph = data["("];
 
-var points = {};
+var points: { [key: string]: Point } = {};
 var index = "";
 var unizon = "";
 var hide = false;
@@ -39,7 +43,7 @@ window.onload = function ()
 
 	render();
 
-	_("c").onmousedown = function (e)
+	_("c").onmousedown = function (e: MouseEvent)
 	{
 		var r = { x: e.layerX, y: e.layerY };
 		var near = Object.keys(points)
@@ -53,15 +57,15 @@ window.onload = function ()
 
 		var u = Object.keys(points)
 			.map(function (i) { return { p: points[i], i: i }; })
-			.filter(function (q) { q.i != index && pointEq(points[index], q.p) });
+			.filter(function (q) { return q.i != index && pointEq(points[index], q.p) });
 		if (u.length == 1)
 			unizon = u[0].i;
 	}
-	_("c").onmouseup = function (e)
+	_("c").onmouseup = function (e: MouseEvent)
 	{
 		index = unizon = "";
 	}
-	_("c").onmousemove = function (e)
+	_("c").onmousemove = function (e: MouseEvent)
 	{
 		if (index == "")
 			return;
@@ -85,7 +89,7 @@ window.onload = function ()
 
 function render()
 {
-	var canvas = _("c");
+	var canvas = <HTMLCanvasElement>_("c");
 	canvas.width = glyph.width;
 	canvas.height = glyph.height;
 	var context = canvas.getContext("2d");
@@ -112,7 +116,7 @@ function output()
 }
 
 
-function drawInfo(ctx, p)
+function drawInfo(ctx: CanvasRenderingContext2D, p: Glyph)
 {
 	points = {};
 	_("s").innerHTML = "";
@@ -151,16 +155,16 @@ function drawInfo(ctx, p)
 }
 
 
-function _(id) { return document.getElementById(id); }
+function _(id: string): any { return document.getElementById(id); }
 
-function fillCircle(ctx, pos, color)
+function fillCircle(ctx: CanvasRenderingContext2D, pos: Point, color: string)
 {
 	ctx.beginPath();
 	ctx.fillStyle = color;
 	ctx.arc(pos.x, pos.y, 2, 0, 2 * Math.PI, false);
 	ctx.fill();
 }
-function strokeLine(ctx, from, to, color)
+function strokeLine(ctx: CanvasRenderingContext2D, from: Point, to: Point, color: string)
 {
 	ctx.beginPath();
 	ctx.strokeStyle = color;
@@ -169,11 +173,11 @@ function strokeLine(ctx, from, to, color)
 	ctx.stroke();
 }
 
-function pointLen(p1, p2)
+function pointLen(p1: Point, p2: Point): number
 {
 	return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
 }
-function pointEq(p1, p2)
+function pointEq(p1: Point, p2: Point): boolean
 {
 	return p1.x == p2.x && p1.y == p2.y;
 }

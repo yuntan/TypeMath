@@ -8,6 +8,7 @@
         "outDir": "build/"
     },
     "files": [
-        "app.ts"
+        "app.ts",
+        "glyphEdit.ts"
     ]
 }

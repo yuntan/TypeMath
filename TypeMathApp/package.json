@@ -5,7 +5,7 @@
   "main": "typemath.js",
   "scripts": {
     "compile": "tsc --project .",
-    "bundle": "browserify -o build/app.js --debug build/TypeMathApp/app.js",
+    "bundle": "browserify -o build/app.js --debug build/TypeMathApp/app.js && browserify -o build/glyphEdit.js --debug build/TypeMathApp/glyphEdit.js",
     "build": "rm -rf build; npm run compile && npm run bundle"
   },
   "author": "",
