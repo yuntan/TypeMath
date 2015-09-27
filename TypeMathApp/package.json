@@ -1,0 +1,16 @@
+{
+  "name": "typemath",
+  "version": "1.0.0",
+  "description": "",
+  "main": "typemath.js",
+  "scripts": {
+    "compile": "tsc --project .",
+    "bundle": "browserify -o build/app.js --debug build/TypeMathApp/app.js",
+    "build": "rm -rf build; npm run compile && npm run bundle"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "browserify": "^11.2.0"
+  }
+}

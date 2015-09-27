@@ -3,25 +3,14 @@
 <head>
 	<meta charset="utf-8" />
 	<title>TypeMath</title>
-	<link rel="stylesheet" href="app.css" type="text/css" />
-	<link rel="stylesheet" href="formula.css" type="text/css" />
-	<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-	<script src="util.js"></script>
-	<script src="keyboard.js"></script>
-	<script src="formula.js"></script>
-	<script src="diagram.js"></script>
-	<script src="latex.js"></script>
-	<script src="latexReader.js"></script>
-	<script src="symbolTable.js"></script>
-	<script src="unicode.js"></script>
-	<script src="glyph.js"></script>
-	<script src="calc.js"></script>
-	<script src="app.js"></script>
+	<link rel="stylesheet" href="css/app.css" type="text/css" />
+	<link rel="stylesheet" href="css/formula.css" type="text/css" />
 </head>
 <body>
 	<div class="panel">
 		<input id="autosave" type="checkbox"/> autosave
 		<input id="proofMode" type="checkbox"/> proof mode
+		<button id="import">Import LaTeX</button>
 		| <a href="usage.html">usage</a>
 	</div>
 
@@ -36,6 +25,13 @@
 		<textarea></textarea>
 	</div>
 
-	<div id="latex" class="panel"></div>
+	<div id="latex-wrapper" class="panel">
+		<input id="latex" type="text"/>
+	</div>
+
+	<pre id="debug"></pre>
+
+	<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script src="build/app.js"></script>
 </body>
 </html>
