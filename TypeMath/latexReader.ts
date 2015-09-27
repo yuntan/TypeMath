@@ -305,7 +305,7 @@ export class LaTeXReader
 	}
 	private white(): void
 	{
-		var i;
+		var i: number;
 		for (i = 0; i < this.rest.length; i++)
 		{
 			var c = this.rest.charAt(i);

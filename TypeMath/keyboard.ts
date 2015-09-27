@@ -3,7 +3,7 @@
 	Space, Left, Right, Up, Down, Backspace, Delete, Tab, Enter, Shift
 }
 
-let keyMapBlink = {
+const keyMapBlink = {
 	"U+0031": ["1", "!"],
 	"U+0032": ["2", "\""],
 	"U+0033": ["3", "#"],
@@ -41,7 +41,7 @@ export function knowKey(e: KeyboardEvent): string
 			key = keyMapBlink[id][e.shiftKey ? 1 : 0];
 		else
 		{
-			key = this.getAsciiKey(parseInt(id.substr(2), 16));
+			key = getAsciiKey(parseInt(id.substr(2), 16));
 			if (!e.shiftKey)
 				key = key.toLowerCase();
 		}

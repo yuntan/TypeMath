@@ -528,7 +528,7 @@ export class Formula extends Token /* TokenSeq */
 
 	public remove(from: number, to?: number): Token[]
 	{
-		var i, c: number;
+		var i: number, c: number;
 		if (to === undefined)
 			i = from, c = 1;
 		else

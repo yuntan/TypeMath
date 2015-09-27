@@ -304,7 +304,7 @@ export default function eval(t: Token[]): Token[]
 			for (var i = 0; i < m.elems.length; i++)
 			{
 				m.elems[i].tokens = m.elems[i].tokens.reduce(
-					(prev: Token[], curr) => prev.concat(interpret(curr)), []);
+					(prev: Token[], curr: Token) => prev.concat(interpret(curr)), []);
 			}
 			f.tokens.push(m);
 

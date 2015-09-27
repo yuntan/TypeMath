@@ -100,20 +100,35 @@ interface OutputInfo
 
 export default class TypeMath
 {
-	private field: JQuery;
-	private active: JQuery;
-	private latex: JQuery;
-	private importer: JQuery;
-	private importerBox: JQuery;
-	private candy: JQuery;
-	private ghost: JQuery;
-	private selectedArea: JQuery;
-	private glyph: GlyphFactory;
-	private _log: JQuery;
-	private _status: JQuery;
+	/////////////////
+	/* public prop */
+	/////////////////
+	public proofMode: boolean;
+	public candMax = 16;
+	public changed: Function;
+
+	public get latexCode(): string {
+		let macrocode = "";
+		for (var macro in this.macroTable)
+		{
+			var m = this.macroTable[macro];
+			var s = "\\newcommand{\\" + macro + "}";
+			if (m.argc > 0)
+				s += "[" + m.argc.toString() + "]";
+			s += "{" + latex.trans(m.content) + "}";
+			macrocode += s + "\n";
+		}
+		if (macrocode.length > 0)
+			macrocode += "\n";
+		return macrocode + latex.trans(this.formula, "", this.proofMode);
+	}
+
+	//////////////////
+	/* private prop */
+	//////////////////
+	private $active: JQuery;
+	private _glyph: GlyphFactory;
 	private _logText = "";
-	private _enableLog = false;
-	private _enableStatus = !false;
 
 	private formula = new Formula(null);
 	private activeField: TokenSeq = this.formula;
@@ -138,17 +153,12 @@ export default class TypeMath
 		field: null,
 		epoch: 0
 	};
-	private importMode: boolean;
-	private proofMode: boolean;
-	private autosave: boolean;
 	private clipboard: Token[] = [];
 	private outputCurrentStyle: FontStyle[];
 	private afterLayout: Token[];
 	private records: Record[] = [];
 	private dragFrom: { x: number; y: number } = null;
 	private dragRect: Rect = null;
-
-	public candMax = 16;
 
 	private digits: string[] = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
 	private symbols: string[] = [
@@ -199,63 +209,32 @@ export default class TypeMath
 		return this.macroOption.field !== null;
 	}
 
-	constructor(field: JQuery, latex: JQuery, importer: JQuery, candy: JQuery, ghost: JQuery, select: JQuery, autosave: JQuery, proof: JQuery)
+	/////////////////
+	/* public func */
+	/////////////////
+	constructor(private $field: JQuery, private $latex: JQuery, private $candy: JQuery, private $ghost: JQuery, private $selectedArea: JQuery, private $debug: JQuery)
 	{
-		this.field = field;
-		this.importer = importer;
-		this.importerBox = importer.children("textarea");
-		this.latex = latex;
-		this.candy = candy;
-		this.ghost = ghost;
-		this.selectedArea = select;
-
 		this.enrichKeywords();
 
-		// document.onkeydown = (e) => { this.processInput(e) };
-		this.latex.focus();
-		this.latex.on('keydown', (e) => { this.processInput(e.originalEvent) });
-		proof.change(e =>
-		{
-			this.proofMode = proof.prop("checked");
-		});
-		autosave.change(e =>
-		{
-			this.autosave = autosave.prop("checked");
-			if (!this.autosave)
-				localStorage.setItem("latex", "");
-		});
-		proof.change();
-		$('#btnCopy').on('mouseup', (e) => {
-			if (!document.queryCommandSupported('copy')) return;
-			let latex = document.querySelector((<any>this.latex).selector);
-			let range = document.createRange();
-			range.selectNode(latex);
-			window.getSelection().addRange(range);
-			let ok = document.execCommand('copy');
-			console.debug(ok ? 'copied' : 'copy failed');
-			window.getSelection().removeAllRanges();	// remove selection
-		});
-		ghost.mousedown((e) => { this.dragFrom = { x: e.pageX, y: e.pageY }; this.jumpTo(this.dragFrom); });
-		ghost.mousemove((e) => { this.dragSelect(e); });
-		ghost.mouseup((e) => { this.dragFrom = this.dragRect = null; this.render(); });
+		this.$latex.focus();
+		this.$latex.on('keydown', (e) => { this.processInput(<KeyboardEvent> e.originalEvent) });
+		this.$ghost.on('mousedown', (e) => { this.dragFrom = { x: e.pageX, y: e.pageY }; this.jumpTo(this.dragFrom); });
+		this.$ghost.on('mousemove', (e) => { this.dragSelect(<JQueryMouseEventObject> e); });
+		this.$ghost.on('mouseup', (e) => { this.dragFrom = this.dragRect = null; this.render(); this.$latex.focus(); });
 
-		$(document.body).append(this._status = $("<pre/>").css("font-size", "9pt"));
-		$(document.body).append(this._log = $("<pre/>").css("font-size", "9pt"));
-
-		this.glyph = new GlyphFactory();
-
-		var src: string;
-		if (src = localStorage.getItem("latex"))
-		{
-			console.log("load localStorage");
-			var code = LaTeXReader.parse(src);
-			this.interpretLaTeX(code);
-			autosave.prop("checked", true);
-		}
-		autosave.change();
-
+		this._glyph = new GlyphFactory();
 		this.render();
 	}
+
+	public importLaTeXCode(src: string) {
+		var code = LaTeXReader.parse(src);
+		this.interpretLaTeX(code);
+		this.render();
+	}
+
+	//////////////////
+	/* private func */
+	//////////////////
 	private enrichKeywords(): void
 	{
 		var dic: { [key: string]: any }[] = [latex.symbols, latex.accentSymbols];
@@ -273,6 +252,7 @@ export default class TypeMath
 		for (var c in latex.styles)
 			this.keywords[c] = "";
 	}
+
 	private render(): void
 	{
 		var a = (this.currentInput != "" ? this.currentInput : unicode.SixPerEmSpace) + this.postInput;
@@ -280,30 +260,29 @@ export default class TypeMath
 		if (this.inputEscaped)
 			a = "\\" + a;
 
-		this.active = null;
+		this.$active = null;
 		this.afterLayout = [];
 
-		this.field.empty();
+		this.$field.empty();
 		this.outputCurrentStyle = [FontStyle.Normal];
-		this.outputToken(this.field, this.formula, { arguments: null, actGenerated: false });
+		this.outputToken(this.$field, this.formula, { arguments: null, actGenerated: false });
 
-		if (this.active)
+		if (this.$active)
 		{
-			this.active.text(a);
+			this.$active.text(a);
 			a = null;
 		}
 
 		this.drawAfterLayout();
 
-		if (a && this.active)
-			this.active.text(a);
+		if (a && this.$active)
+			this.$active.text(a);
 
 		this.showCandidate();
 
-		if (this.dragFrom && this.dragRect)
-		{
-			var ofs = this.field.offset();
-			this.selectedArea.css({
+		if (this.dragFrom && this.dragRect) {
+			var ofs = this.$field.offset();
+			this.$selectedArea.css({
 				visibility: "visible",
 				left: (this.dragRect.left - ofs.left) + "px",
 				top: (this.dragRect.top - ofs.top) + "px",
@@ -311,29 +290,12 @@ export default class TypeMath
 				height: this.dragRect.height + "px"
 			});
 		}
-		else
-			this.selectedArea.css("visibility", "hidden");
+		else this.$selectedArea.css("visibility", "hidden");
 
-		let latextext = "";
-		for (var macro in this.macroTable)
-		{
-			var m = this.macroTable[macro];
-			var s = "\\newcommand{\\" + macro + "}";
-			if (m.argc > 0)
-				s += "[" + m.argc.toString() + "]";
-			s += "{" + latex.trans(m.content) + "}";
-			latextext += s + "\n";
-		}
-		if (latextext.length > 0)
-			latextext += "\n";
-		latextext += latex.trans(this.formula, "", this.proofMode);
-		// this.latex.text(latex);
-		this.latex.val(latextext);
-		if (this.autosave)
-			localStorage.setItem("latex", latextext);
+		this.$latex.val(this.latexCode);
 
-		if (this._enableStatus)
-			this._status.text([
+		if (this.$debug)
+			this.$debug.text([
 				"formula       = " + this.formula.toString(),
 				"activeFormula = " + this.activeField.toString(),
 				"activeIndex   = " + this.activeIndex.toString(),
@@ -358,7 +320,8 @@ export default class TypeMath
 				"records       = " + this.records.map(this.writeRecord).join("\n")
 			].join("\n"));
 	}
-	private writeRecord(r: Record)
+
+	private writeRecord(r: Record): string
 	{
 		return Object.keys(r).map(p => p + ":" + r[p]).join(", ");
 	}
@@ -369,21 +332,6 @@ export default class TypeMath
 	private processInput(e: KeyboardEvent): void
 	{
 		var key = knowKey(e);
-
-		if (this.importMode)
-		{
-			if (e.ctrlKey && key == "l")
-			{
-				var src = this.importerBox.val();
-				var code = LaTeXReader.parse(src);
-				this.interpretLaTeX(code);
-				this.importer.css("visibility", "hidden");
-				this.importMode = false;
-				this.render();
-				e.preventDefault();
-			}
-			return;
-		}
 
 		if (key == "")
 		{
@@ -402,6 +350,7 @@ export default class TypeMath
 			&& this.processInputDiagram(key))
 		{
 			this.render();
+			if (this.changed) this.changed();
 			e.preventDefault();
 			return;
 		}
@@ -437,6 +386,7 @@ export default class TypeMath
 		}
 
 		this.render();
+		if (this.changed) this.changed();
 		e.preventDefault();
 	}
 	private getInputType(s: string): InputType
@@ -651,6 +601,7 @@ export default class TypeMath
 		if (suppress)
 			e.preventDefault();
 		this.render();
+		if (this.changed) this.changed();
 	}
 	private processModifiedInput(e: KeyboardEvent, key: string): void
 	{
@@ -658,8 +609,8 @@ export default class TypeMath
 
 		switch (key)
 		{
-			case "c":
-			case "x":
+			case "c": // clipboard copy
+			case "x": // clipboard cut
 				if (this.markedIndex >= 0)
 				{
 					this.clipboard = this.activeField.copy(this.markedIndex, this.activeIndex);
@@ -668,7 +619,7 @@ export default class TypeMath
 					this.markedIndex = -1;
 				}
 				break;
-			case "v":
+			case "v": // clipboard paste
 				if (this.clipboard != null)
 					this.pasteToken(this.clipboard);
 				break;
@@ -681,15 +632,6 @@ export default class TypeMath
 				else
 					this.exitMacroMode();
 				break;
-			case "l":
-				if (!this.importMode)
-				{
-					this.importerBox.val("");
-					this.importer.css("visibility", "visible");
-					this.importerBox.focus();
-					this.importMode = true;
-				}
-				break;
 			default:
 				suppress = false;
 				break;
@@ -698,12 +640,13 @@ export default class TypeMath
 		if (suppress)
 			e.preventDefault();
 		this.render();
+		if (this.changed) this.changed();
 	}
 
 	//////////////////////////////////////
 	/*  Import LaTeX                    */
 	//////////////////////////////////////
-	public interpretLaTeX(code: LaTeXAST): void
+	private interpretLaTeX(code: LaTeXAST): void
 	{
 		switch (code.type)
 		{
@@ -1145,7 +1088,7 @@ export default class TypeMath
 				{
 					this.transferFormula(false, neig);
 
-					var rect = this.active[0].getBoundingClientRect();
+					var rect = this.$active[0].getBoundingClientRect();
 					var x0 = (rect.left + rect.right) / 2;
 					var a : number[] = [];
 					for (var i = 0; i < neig.tokens.length; i++)
@@ -1204,20 +1147,20 @@ export default class TypeMath
 
 		if (key.length == 0 || cand.length == 0)
 		{
-			this.candy.css("visibility", "hidden");
+			this.$candy.css("visibility", "hidden");
 			this.candIndex = -1;
 			return;
 		}
 
 		if (this.candIndex < 0)	// not shown now
 		{
-			var ofs = this.active.offset();
+			var ofs = this.$active.offset();
 
 			this.candIndex = 0;
-			this.candy.css({
+			this.$candy.css({
 				"visibility": "visible",
 				"left": ofs.left,
-				"top": ofs.top + this.active.height()
+				"top": ofs.top + this.$active.height()
 			});
 		}
 
@@ -1237,7 +1180,7 @@ export default class TypeMath
 			cand = cand.slice(i0, i0 + this.candMax);
 		}
 
-		this.candy.empty();
+		this.$candy.empty();
 		cand.forEach((c, i) =>
 		{
 			var glyph = (c in this.keywords ? this.keywords[c] : c);
@@ -1251,7 +1194,7 @@ export default class TypeMath
 				e.addClass("candidateSelected");
 				this.candSelected = c;
 			}
-			this.candy.append(e);
+			this.$candy.append(e);
 		});
 	}
 
@@ -1412,7 +1355,7 @@ export default class TypeMath
 	//////////////////////////////////////
 	/*  mouse operation					*/
 	//////////////////////////////////////
-	private dragSelect(e: JQueryEventObject): void
+	private dragSelect(e: JQueryMouseEventObject): void
 	{
 		if (!this.dragFrom)
 			return;
@@ -1425,7 +1368,7 @@ export default class TypeMath
 	private selectByRect(select: Rect, parent: TokenSeq = this.formula): void
 	{
 		var n = parent.count();
-		var selected = [];
+		var selected: number[] = [];
 
 		for (var i = 0; i < n; i++)
 		{
@@ -2007,8 +1950,8 @@ export default class TypeMath
 	private jumpFormula(target: TokenSeq): boolean
 	{
 		var leave = 0, enter = -1;
-		var toSeq = [];
-		var toIndex = [];
+		var toSeq: TokenSeq[] = [];
+		var toIndex: number[] = [];
 
 		for (var to = target; to; to = to.parent)
 		{
@@ -2446,7 +2389,7 @@ export default class TypeMath
 	private makeGlyph(char: string): JQuery
 	{
 		var q = $("<div/>");
-		var dat = this.glyph.generate(char);
+		var dat = this._glyph.generate(char);
 
 		if (dat != "")
 			q = q.css("background-image", "url(" + dat + ")");
@@ -2471,10 +2414,10 @@ export default class TypeMath
 			{
 				if (i == this.activeIndex)
 				{
-					this.active = $("<div/>");
+					this.$active = $("<div/>");
 					if (this.markedIndex < 0)
-						this.active.addClass("active");
-					e.append(this.active);
+						this.$active.addClass("active");
+					e.append(this.$active);
 				}
 				if (this.markedIndex >= 0)
 				{
@@ -2506,13 +2449,13 @@ export default class TypeMath
 	}
 	private drawAfterLayout(): void
 	{
-		var box = this.field[0].getBoundingClientRect();
+		var box = this.$field[0].getBoundingClientRect();
 		// var box = this.ghost[0].getBoundingClientRect();
-		this.ghost.prop({
+		this.$ghost.prop({
 			"width": box.width,
 			"height": box.height
 		});
-		var ctx = (<HTMLCanvasElement> this.ghost[0]).getContext("2d");
+		var ctx = (<HTMLCanvasElement> this.$ghost[0]).getContext("2d");
 
 		for (var i = 0; i < this.afterLayout.length; i++)
 		{
@@ -2560,9 +2503,9 @@ export default class TypeMath
 						// this implementation unable to macroize diagram
 						this.outputToken(label, a.label, { arguments: null, actGenerated: false });
 						if (this.activeField == a.label && a.label.empty())
-							this.active.text(unicode.EnSpace);	// there must be some contents to layout in drawArrow
+							this.$active.text(unicode.EnSpace);	// there must be some contents to layout in drawArrow
 
-						this.field.append(label);
+						this.$field.append(label);
 					}
 
 					var shift = 10 * (k - (as.length - 1) / 2);

@@ -4,7 +4,7 @@ import * as util from './util';
 
 let proofMode = false;
 
-let amsBracket = {
+const amsBracket = {
 	"()": "p",
 	"[]": "b",
 	"{}": "B",
@@ -13,7 +13,7 @@ let amsBracket = {
 	"": ""
 };
 
-export let styles: { [key: string]: FontStyle } = {
+export const styles: { [key: string]: FontStyle } = {
 	"mathbf": FontStyle.Bold,
 	"mathrm": FontStyle.Roman,
 	"mathscr": FontStyle.Script,
@@ -22,7 +22,7 @@ export let styles: { [key: string]: FontStyle } = {
 	"mathtt": FontStyle.Typewriter
 };
 
-export let accentSymbols: { [key: string]: string } = {
+export const accentSymbols: { [key: string]: string } = {
 	"←": "overleftarrow",
 	"→": "overrightarrow",
 	"～": "widetilde",
@@ -33,7 +33,7 @@ export let accentSymbols: { [key: string]: string } = {
 	"︸": "underbrace"
 };
 
-export let symbols: { [key: string]: string } = {
+export const symbols: { [key: string]: string } = {
     "̀": "grave",
     "́": "acute",
     "̂": "hat",
@@ -495,13 +495,13 @@ function macroBroken(n: string, indent: string, ...args: Token[]): string
 export function trans(t: Token, indent?: string, proof?: boolean): string
 {
 	if (proof != undefined)
-		this.proofMode = proof;
+		proofMode = proof;
 	if (indent == undefined)
 		indent = "";
 
 	if (t instanceof Symbol)
 	{
-		return this.transSymbol((<Symbol> t).str, indent);
+		return transSymbol((<Symbol> t).str, indent);
 	}
 	else if (t instanceof Num)
 	{
@@ -519,7 +519,7 @@ export function trans(t: Token, indent?: string, proof?: boolean): string
 		var d = <Diagram> t;
 
 		return "\\xymatrix {"
-			+ this.transDiagram(d, indent)
+			+ transDiagram(d, indent)
 			+ "}";
 	}
 	else if (t instanceof Matrix)
@@ -531,16 +531,16 @@ export function trans(t: Token, indent?: string, proof?: boolean): string
 			opt += "c";
 
 		return "\\begin{array}{" + opt + "}"
-			+ this.transMatrix(m, indent)
+			+ transMatrix(m, indent)
 			+ "\\end{array}";
 	}
 	else if (t instanceof Structure)
 	{
-		return this.transStructure(<Structure> t, indent);
+		return transStructure(<Structure> t, indent);
 	}
 	else if (t instanceof Formula)
 	{
-		return this.transFormula(<Formula> t, indent);
+		return transFormula(<Formula> t, indent);
 	}
 	else
 		return "?";
@@ -553,7 +553,7 @@ function transSymbol(str: string, indent: string): string
 		return "\\" + symbols[s] + "{" + transSymbol(str.slice(0, -1), indent) + "}";
 	}
 
-	if (this.proofMode)
+	if (proofMode)
 	{
 		switch (str)
 		{
@@ -715,7 +715,7 @@ function transStructure(s: Structure, indent: string): string
 				+ "}^{" + trans(s.elems[1]) + "}";
 			break;
 		case StructType.Accent:
-			return "\\" + this.accentSymbols[(<Accent> s).symbol]
+			return "\\" + accentSymbols[(<Accent> s).symbol]
 				+ "{" + trans(s.elems[0]) + "}";
 			break;
 		default:
@@ -729,24 +729,24 @@ function transFormula(f: Formula, indent: string): string
 	{
 		var br = f.prefix + f.suffix;
 
-		if (br in this.amsBracket)	// incomplete condition
+		if (br in amsBracket)	// incomplete condition
 		{
-			var n = this.amsBracket[br];
+			var n = amsBracket[br];
 			return "\\begin{" + n + "matrix}"
-				+ this.transMatrix(<Matrix> f.tokens[0], indent)
+				+ transMatrix(<Matrix> f.tokens[0], indent)
 				+ "\\end{" + n + "matrix}";
 		}
 	}
 
 	var separator = " ";
-	var pre, suf: string;
+	var pre: string, suf: string;
 
 	if (f.style != FontStyle.Normal)
 	{
 		var cmd: string;
 
-		for (cmd in this.styles)
-			if (this.styles[cmd] == f.style)
+		for (cmd in styles)
+			if (styles[cmd] == f.style)
 			{
 				pre = "\\" + cmd + "{";
 				suf = "}";
@@ -763,8 +763,8 @@ function transFormula(f: Formula, indent: string): string
 	}
 	else
 	{
-		pre = this.transSymbol(f.prefix, indent);
-		suf = this.transSymbol(f.suffix, indent);
+		pre = transSymbol(f.prefix, indent);
+		suf = transSymbol(f.suffix, indent);
 
 		if (pre != "")
 			pre = "\\left" + pre + " ";

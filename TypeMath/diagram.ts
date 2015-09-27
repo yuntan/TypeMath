@@ -257,7 +257,7 @@ export class Diagram extends Matrix
 	}
 	public drawArrow(ctx: CanvasRenderingContext2D, box: ClientRect, label: JQuery, arrow: Arrow, shift: number, color?: string): void
 	{
-		var len = (x, y) => Math.sqrt(x * x + y * y);
+		var len = (x: number, y: number): number => Math.sqrt(x * x + y * y);
 
 		var a = this.tokenAt(arrow.from.row, arrow.from.col).renderedElem[0];
 		var b = this.tokenAt(arrow.to.row, arrow.to.col).renderedElem[0];
@@ -275,8 +275,8 @@ export class Diagram extends Matrix
 		var dec1 = this.decorations[arrow.from.row][arrow.from.col];
 		var dec2 = this.decorations[arrow.to.row][arrow.to.col];
 
-		var ax, ay: number;
-		var bx, by: number;
+		var ax: number, ay: number;
+		var bx: number, by: number;
 		if (dec1 && dec1.circle)
 		{
 			var r1 = Math.max(rec1.width, rec1.height) / 2 + 3 * (dec1.size - 2);
